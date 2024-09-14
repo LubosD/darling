@@ -22,8 +22,8 @@
 #include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
-#include <ext/fanotify.h>
-#include <ext/file_handle.h>
+#include <darling/emulation/syscall/linux/ext/fanotify.h>
+#include <darling/emulation/syscall/linux/ext/file_handle.h>
 #include "./linux/fanotify.h"
 #include <dispatch/dispatch.h>
 #include <CoreServices/FileManager.h>
@@ -139,18 +139,18 @@ void setupFANotify(void)
 {
 	// FAN_REPORT_FID = provide file handles
 	// Linux file handle = FSRef in Darling
-	g_fanotify = fanotify_init(FAN_REPORT_FID, 0);
+	g_fanotify = linux_fanotify_init(FAN_REPORT_FID, 0);
 	if (g_fanotify == -1)
 	{
-		perror("fanotify_init");
+		perror("linux_fanotify_init");
 		exit(EXIT_FAILURE);
 	}
 
-	int rv = fanotify_mark(g_fanotify, FAN_MARK_ADD | FAN_MARK_FILESYSTEM,
+	int rv = linux_fanotify_mark(g_fanotify, FAN_MARK_ADD | FAN_MARK_FILESYSTEM,
 		FAN_CREATE | FAN_DELETE | FAN_MOVED_FROM | FAN_MOVED_TO | FAN_MODIFY | FAN_ONDIR, AT_FDCWD, "/");
 	if (rv == -1)
 	{
-		perror("fanotify_mark");
+		perror("linux_fanotify_mark");
 		exit(EXIT_FAILURE);
 	}
 

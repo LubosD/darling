@@ -1,4 +1,4 @@
-#include <darling/emulation/simple.h>
+#include <darling/emulation/syscall/common/simple.h>
 #include <unistd.h>
 #include <dlfcn.h>
 #include <mach/message.h>

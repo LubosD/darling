@@ -1,7 +1,7 @@
 #ifndef _XTRACE_LOCK_H_
 #define _XTRACE_LOCK_H_
 
-#include <darling/emulation/ext/futex.h>
+#include <darling/emulation/syscall/linux/ext/futex.h>
 #include <stdint.h>
 
 #include "base.h"

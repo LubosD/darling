@@ -7,7 +7,7 @@
 #include <sys/spawn_internal.h>
 #include <spawn_private.h>
 
-#include <darling/emulation/simple.h>
+#include <darling/emulation/syscall/common/simple.h>
 #include "bsd_trace.h"
 
 #include "xtracelib.h"

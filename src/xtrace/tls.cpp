@@ -1,11 +1,13 @@
-#include <stdlib.h>
-#include <darling/emulation/ext/for-xtrace.h>
 #include "tls.h"
 #include "memory.h"
 #include "lock.h"
-#include <darling/emulation/simple.h>
-#include <pthread/tsd_private.h>
 #include "xtracelib.h"
+
+#include <stdlib.h>
+#include <pthread/tsd_private.h>
+
+#include <darling/emulation/syscall/common/trace/xtrace_api.h>
+#include <darling/emulation/syscall/common/simple.h>
 
 #ifndef XTRACE_TLS_DEBUG
 	#define XTRACE_TLS_DEBUG 0
@@ -30,7 +32,7 @@ struct tls_table {
 // we have to use a slightly hackier technique: using one of the system's reserved but unused TLS keys; we use one from the range we currently reserve
 // for Darling.
 
-#include <darling/emulation/tsd.h>
+#include <darling/emulation/syscall/common/darling_tsd.h>
 
 // TODO: also perform TLS cleanup for other threads when doing a fork
 

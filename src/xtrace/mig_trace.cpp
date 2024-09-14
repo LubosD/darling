@@ -8,7 +8,7 @@
 
 #include <mach/mach.h>
 
-#include <darling/emulation/simple.h>
+#include <darling/emulation/syscall/common/simple.h>
 #include "xtracelib.h"
 #include "mach_trace.h"
 #include "bsd_trace.h"

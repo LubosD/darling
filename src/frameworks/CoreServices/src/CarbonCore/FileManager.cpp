@@ -38,7 +38,7 @@ along with Darling.  If not, see <http://www.gnu.org/licenses/>.
 #include <vector>
 #include <CarbonCore/DateTimeUtils.h>
 #include <errno.h>
-#include <ext/file_handle.h>
+#include <darling/emulation/syscall/linux/ext/file_handle.h>
 
 #define STUB() // TODO
 
@@ -59,7 +59,7 @@ OSStatus FSPathMakeRefWithOptions(const uint8_t* path, long options, FSRef* fsre
 	if (options & kFSPathMakeRefDoNotFollowLeafSymlink)
 		flags = 0;
 
-	int err = sys_name_to_handle((const char*) path, (RefData*) fsref, flags);
+	int err = linux_name_to_handle((const char*) path, (RefData*) fsref, flags);
 	if (err != 0)
 		return fnfErr;
 
@@ -84,7 +84,7 @@ OSStatus FSPathMakeRefWithOptions(const uint8_t* path, long options, FSRef* fsre
 bool FSRefMakePath(const FSRef* fsref, std::string& out)
 {
 	char name[4096];
-	int ret = sys_handle_to_name((RefData*) fsref, name);
+	int ret = linux_handle_to_name((RefData*) fsref, name);
 	if (ret != 0)
 		return false;
 
