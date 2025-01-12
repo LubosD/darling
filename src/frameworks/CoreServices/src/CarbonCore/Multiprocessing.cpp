@@ -21,14 +21,7 @@ along with Darling.  If not, see <http://www.gnu.org/licenses/>.
 #include <unistd.h>
 #include <ctime>
 #include <pthread.h>
-#include <stdio.h>
-#include <stdlib.h>
 #include <CarbonCore/MacErrors.h>
-
-static int verbose = 0;
-__attribute__((constructor)) static void initme(void) {
-    verbose = getenv("STUB_VERBOSE") != NULL;
-}
 
 Boolean _MPIsFullyInitialized()
 {
@@ -115,28 +108,4 @@ OSStatus MPExitCriticalRegion(MPCriticalRegionID criticalRegion)
 	}
 	else
 		return paramErr;
-}
-
-OSStatus MPCreateSemaphore(MPSemaphoreCount maximumValue, MPSemaphoreCount initialValue, MPSemaphoreID *semaphore)
-{
-    if (verbose) puts("STUB: MPCreateSemaphore called");
-    return noErr;
-}
-
-OSStatus MPDeleteSemaphore(MPSemaphoreID semaphore)
-{
-    if (verbose) puts("STUB: MPDeleteSemaphore called");
-    return noErr;
-}
-
-OSStatus MPSignalSemaphore(MPSemaphoreID semaphore)
-{
-    if (verbose) puts("STUB: MPSignalSemaphore called");
-    return noErr;
-}
-
-OSStatus MPWaitOnSemaphore(MPSemaphoreID semaphore, Duration timeout)
-{
-    if (verbose) puts("STUB: MPWaitOnSemaphore called");
-    return noErr;
 }

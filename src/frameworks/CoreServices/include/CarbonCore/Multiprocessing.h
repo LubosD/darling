@@ -14,8 +14,6 @@ enum {
 };
 
 typedef void* MPCriticalRegionID;
-typedef struct OpaqueMPSemaphoreID *MPSemaphoreID;
-typedef ItemCount MPSemaphoreCount;
 
 Boolean _MPIsFullyInitialized();
 OSStatus MPDelayUntil(AbsoluteTime* time);
@@ -25,10 +23,7 @@ OSStatus MPCreateCriticalRegion(MPCriticalRegionID* criticalRegion);
 OSStatus MPDeleteCriticalRegion(MPCriticalRegionID criticalRegion);
 OSStatus MPEnterCriticalRegion(MPCriticalRegionID criticalRegion, Duration timeout);
 OSStatus MPExitCriticalRegion(MPCriticalRegionID criticalRegion);
-OSStatus MPCreateSemaphore(MPSemaphoreCount maximumValue, MPSemaphoreCount initialValue, MPSemaphoreID *semaphore);
-OSStatus MPDeleteSemaphore(MPSemaphoreID semaphore);
-OSStatus MPSignalSemaphore(MPSemaphoreID semaphore);
-OSStatus MPWaitOnSemaphore(MPSemaphoreID semaphore, Duration timeout);
+
 // other functions are missing...
 
 #ifdef __cplusplus
