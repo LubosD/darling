@@ -6,7 +6,6 @@
 %if "%{commit_date}" == ""
 	%define commit_date 0
 %endif
-%global _buildshell /bin/bash
 
 # explicitly ignore all the bogus dependencies that the auto-scanner finds in `/usr/libexec/darling`
 #
@@ -25,9 +24,8 @@ URL:            https://www.darlinghq.org/
 # Use this line for Source0 if there are ever official versions.
 # Source0:        https://github.com/darlinghq/darling/archive/%%{version}/%%{name}-%%{version}.tar.gz
 Source0:        %{name}.tar.gz
-BuildRoot:      %{_tmppath}/%{name}-%{version}-%{release}-root-%(%{__id_u} -n)
 
-BuildRequires:  cmake clang bison flex python2 glibc-devel(x86-64) glibc-devel(x86-32)
+BuildRequires:  cmake clang bison flex glibc-devel(x86-64) glibc-devel(x86-32)
 BuildRequires:  fuse-devel systemd-devel
 BuildRequires:  cairo-devel freetype-devel(x86-64) fontconfig-devel(x86-64)
 BuildRequires:  freetype-devel(x86-32) fontconfig-devel(x86-32) make
@@ -38,7 +36,7 @@ BuildRequires:  libxml2-devel elfutils-libelf-devel
 BuildRequires:  libbsd-devel
 BuildRequires:  ffmpeg-devel pulseaudio-libs-devel openssl-devel giflib-devel
 BuildRequires:  libXrandr-devel libXcursor-devel libxkbfile-devel dbus-devel mesa-libGLU-devel
-BuildRequires:  vulkan-headers llvm-devel libcap-devel bash vulkan-loader-devel
+BuildRequires:  vulkan-headers llvm-devel libcap-devel vulkan-loader-devel
 
 Requires: darling-cli darling-python2 darling-ruby darling-perl darling-gui darling-gui-stubs darling-pyobjc
 
@@ -210,84 +208,79 @@ GUI stub components of Darling
 
 %build
 %{__mkdir_p} build
-pushd build
-	# Release is broken https://github.com/darlinghq/darling/issues/331
-	#          -DCMAKE_BUILD_TYPE=Release \
-	CFLAGS="" CXXFLAGS="" CPPFLAGS="" LDFLAGS="" \
-	%{__cmake} -DCMAKE_INSTALL_PREFIX=%{_prefix} \
-	           -DOpenGL_GL_PREFERENCE=GLVND \
-	           -DDEBIAN_PACKAGING=ON \
-	           -DJSC_UNIFIED_BUILD=ON \
-	           ..
-	%{make_build} -j `nproc`
-popd
+cd build
+# Release is broken https://github.com/darlinghq/darling/issues/331
+#          -DCMAKE_BUILD_TYPE=Release \
+unset CFLAGS CXXFLAGS CPPFLAGS LDFLAGS
+%{__cmake} -DCMAKE_INSTALL_PREFIX=%{_prefix} \
+           -DOpenGL_GL_PREFERENCE=GLVND \
+           -DDEBIAN_PACKAGING=ON \
+           -DJSC_UNIFIED_BUILD=ON \
+           ..
+%{make_build}
 
 %install
-[ "$RPM_BUILD_ROOT" != "/" ] && rm -rf $RPM_BUILD_ROOT
-DARLING_COMPONENTS=(
-	core
-	system
-	cli
-	ffi
-	cli_gui_common
-	iokitd
-	cli_dev_gui_common
-	cli_extra
-	gui
-	python
-	cli_python_common
-	pyobjc
-	ruby
-	perl
-	jsc_webkit_common
-	jsc
-	iosurface
-	cli_dev_gui_stubs_common
-	gui_stubs
-)
-PACKAGE_SUFFIXES=(
-	core
-	system
-	cli
-	ffi
-	cli-gui-common
-	iokitd
-	cli-devenv-gui-common
-	cli-extra
-	gui
-	python2
-	cli-python2-common
-	pyobjc
-	ruby
-	perl
-	jsc-webkit-common
-	jsc
-	iosurface
-	cli-devenv-gui-stubs-common
-	gui-stubs
-)
-pushd build
-	for index in {0..18}; do
-		rm -rf tmp/${PACKAGE_SUFFIXES[index]}
-		DESTDIR=tmp/${PACKAGE_SUFFIXES[index]} %{__cmake} -DCOMPONENT=${DARLING_COMPONENTS[index]} -P cmake_install.cmake
-		find tmp/${PACKAGE_SUFFIXES[index]} \( ! -type d -o -type d -empty \) -printf '"/%%P"\n' > files.${PACKAGE_SUFFIXES[index]}.txt
-		cp -rla tmp/${PACKAGE_SUFFIXES[index]}/. %{?buildroot}/
-	done
+%if "%{?buildroot}" != "" && "%{?buildroot}" != "/"
+%{__rm} -Rf "%{buildroot}"
+%{__mkdir_p} "%{dirname:%{buildroot}}"
+%endif
 
-	# pack up a "source" (actually binary) tarball for `darling-cli-devenv`
-	# NOTE: this is probably not the best approach. fix this if something better comes up.
-	rm -rf tmp/cli-devenv
-	DESTDIR=tmp/cli-devenv %{__cmake} -DCOMPONENT=cli_dev -P cmake_install.cmake
-	rm -f %{_sourcedir}/darling-cli-devenv.tar.gz
-	tar --transform "s|^\./|darling-cli-devenv/|" -cf %{_sourcedir}/darling-cli-devenv.tar.gz -C tmp/cli-devenv .
-popd
+cd build
+
+for component in \
+    core \
+    system \
+    cli \
+    ffi \
+    cli_gui_common \
+    iokitd \
+    cli_dev_gui_common:cli-devenv-gui-common \
+    cli_extra \
+    gui \
+    python:python2 \
+    cli_python_common:cli-python2-common \
+    pyobjc \
+    ruby \
+    perl \
+    jsc_webkit_common \
+    jsc \
+    iosurface \
+    cli_dev_gui_stubs_common:cli-devenv-gui-stubs-common \
+    gui_stubs
+do
+    case "${component}" in
+        *:*) package="${component#*:}" component="${component%:*}" ;;
+        *)   package="$(printf %s "${component}" | tr _ -)" ;;
+    esac
+    export DESTDIR="tmp/${package}"
+    %{__rm} -Rf "${DESTDIR}"
+    %{__cmake} -D COMPONENT="${component}" -P cmake_install.cmake
+    (
+        cd "${DESTDIR}"
+        echo "%attr(-, root, root)"
+        find * -type d -empty | LC_ALL=C sort | sed -e 's|^|%dir "/|' -e 's|$|"|'
+        find * ! -type d | LC_ALL=C sort | sed -e 's|^|"/|' -e 's|$|"|'
+    ) >"files.${package}.txt"
+    %{__cp} -PRp "${DESTDIR}/." %{?buildroot}/
+    %{__rm} -Rf "${DESTDIR}"
+done
+
+# pack up a "source" (actually binary) tarball for `darling-cli-devenv`
+# NOTE: this is probably not the best approach. fix this if something better comes up.
+export DESTDIR=tmp/cli-devenv
+%{__rm} -Rf "${DESTDIR}"
+%{__cmake} -D COMPONENT=cli_dev -P cmake_install.cmake
+%{__tar} --transform "s|^\.|darling-cli-devenv|S" -caf %{_sourcedir}/darling-cli-devenv.tar.gz -C "${DESTDIR}" .
+%{__rm} -Rf "${DESTDIR}"
 
 %files
-%doc LICENSE
 
 %files extra
 
 %files core -f build/files.core.txt
+%attr(-, root, root)
+%license LICENSE
+
 %files system -f build/files.system.txt
 %files cli -f build/files.cli.txt
 %files ffi -f build/files.ffi.txt
@@ -308,6 +301,15 @@ popd
 %files gui-stubs -f build/files.gui-stubs.txt
 
 %changelog
+* Wed Oct 25 2023 Benjamin Gaillard <git@benjamin.gaillard.name> - 0.1.20231025-1
+- Use default build root
+- Honor tar compression according to file extension
+- Move license file to the core package
+- Use appropriate RPM macros
+- Make regular copy instead of hard links to avoid filesystem issues
+- Use standard POSIX shell and utilities instead of Bash
+- Remove Python 2 build dependency
+
 * Tue May 02 2023 Ariel Abreu <facekapow@outlook.com> - 0.1.20230502-1
 - Update to latest version and Fedora 37
 - Split package into multiple packages (one for each component of Darling)

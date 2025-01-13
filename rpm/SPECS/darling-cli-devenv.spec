@@ -8,7 +8,6 @@
 %if "%{commit_date}" == ""
 	%define commit_date 0
 %endif
-%global _buildshell /bin/bash
 
 Name:           darling-cli-devenv
 Version:        0.1.%{commit_date}
@@ -21,9 +20,6 @@ URL:            https://www.darlinghq.org/
 # Use this line for Source0 if there are ever official versions.
 # Source0:        https://github.com/darlinghq/darling/archive/%%{version}/%%{name}-%%{version}.tar.gz
 Source0:        %{name}.tar.gz
-BuildRoot:      %{_tmppath}/%{name}-%{version}-%{release}-root-%(%{__id_u} -n)
-
-BuildRequires:  bash
 
 Requires:       darling-cli darling-python2 darling-ruby darling-perl darling-cli-devenv-gui-common darling-cli-devenv-gui-stubs-common darling-iosurface
 Conflicts:      darling-gui darling-gui-stubs
@@ -38,13 +34,22 @@ A Darling environment for CLI-only programs for building and developing using th
 true
 
 %install
-[ "$RPM_BUILD_ROOT" != "/" ] && rm -rf $RPM_BUILD_ROOT
-cp -rla . %{?buildroot}/
+%if "%{?buildroot}" != "" && "%{?buildroot}" != "/"
+%{__rm} -Rf "%{buildroot}"
+%{__mkdir_p} "%{dirname:%{buildroot}}"
+%endif
+
+%{__cp} -PRp . %{?buildroot}/
 
 %files
 %{_libexecdir}/darling
 
 %changelog
+* Wed Oct 25 2023 Benjamin Gaillard <git@benjamin.gaillard.name> - 0.1.20231025-1
+- Use default build root
+- Use appropriate RPM macros
+- Make regular copy instead of hard links to avoid filesystem issues
+
 * Tue May 02 2023 Ariel Abreu <facekapow@outlook.com> - 0.1.20230502-1
 - Initial version working for Fedora 37
 - Split package off from `darling` package
